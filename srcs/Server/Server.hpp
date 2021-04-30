@@ -76,6 +76,16 @@ private:
 	void initDbAddr();
 
 	uint16_t convertPort(const std::string &port);
+
+	void readRequestFromClient(Client *&pClient);
+
+	void sendRequestToDB(Client *&pClient);
+
+	void readRequestFromDataBase(Client *&pClient);
+
+	void sendResponseToClient(Client *&pClient);
+
+	void addToLogFile(Client *&pClient);
 };
 
 

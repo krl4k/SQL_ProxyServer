@@ -23,7 +23,7 @@ Client::Client(int clientSocket, const sockaddr_in &addr) : _socket(clientSocket
 		std::cerr << "fatal error! connect!" << std::endl;
 		exit(-1);
 	}
-	state = State::START;
+	state = State::READ_FROM_CLIENT;
 }
 
 int Client::getSocket() const {
@@ -32,4 +32,35 @@ int Client::getSocket() const {
 
 int Client::getState() const {
 	return state;
+}
+
+void Client::setState(int state) {
+	Client::state = state;
+}
+
+void Client::setBody(char *body, int bodySize) {
+	for (int i = 0; i < bodySize; ++i) {
+		_body.push_back(body[i]);
+	}
+}
+
+int Client::getDatabaseSocket() const {
+	return _database_Socket;
+}
+
+char *Client::getBody() const {
+	char *buf = new char[_body.size()];
+	for (int i = 0; i < _body.size(); ++i) {
+		buf[i] = _body[i];
+	}
+	return buf;
+
+}
+
+int Client::getBodySize() const {
+	return static_cast<int>(_body.size());
+}
+
+void Client::clearBody() {
+	_body.clear();
 }
