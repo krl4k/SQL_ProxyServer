@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sys/fcntl.h>
 #include <unistd.h>
+#include <cstring>
 #include "Server.hpp"
 
 Server::Server(char *filename) : _serverPort(0), _serverHost(""), _dbPort(0), _dbHost("") {
@@ -67,6 +68,7 @@ int Server::createListenSocket() {
         std::cerr << "fatal error! socket!" << std::endl;
         return -1;
     }
+//    std::fill
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = inet_addr(_serverHost.c_str());
@@ -111,9 +113,10 @@ void Server::lifeStyle() {
        	std::cout << "\nWaiting for connection! " <<"Clients count = " << _client.size() << std::endl;
         initSocketSet();
 
-        select(_maxFdSize + 1, &_readFdSet, &_writeFdSet, NULL, NULL);
+		select(_maxFdSize + 1, &_readFdSet, &_writeFdSet, NULL, NULL);
 
-        acceptNewClient();
+		acceptNewClient();
+
         handler();
     }
 }
