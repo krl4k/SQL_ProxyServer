@@ -250,7 +250,6 @@ void Server::addToLogFile(Client *&pClient) {
 	for (int i = 5; i < pClient->getBodySize() - 1; ++i) {
 		write(_logFileFd, &log[i], 1);
 	}
-//	write(_logFileFd, pClient->getBody(), pClient->getBodySize());
 	write(_logFileFd, "\n-----------------------------------------\n", 43);
 }
 
