@@ -39,9 +39,13 @@ void Client::setState(int state) {
 }
 
 void Client::setBody(char *body, int bodySize) {
+	std::cout << "len = " << bodySize << ", response:\n" << std::endl;
 	for (int i = 0; i < bodySize; ++i) {
+		if (i > 4 && i < bodySize - 1)
+			std::cout << body[i];
 		_body.push_back(body[i]);
 	}
+	std::cout << std::endl;
 }
 
 int Client::getDatabaseSocket() const {

@@ -47,6 +47,7 @@ private:
     int _socket;
 	sockaddr_in _addr;
 	int _database_Socket;
+
     std::vector<char> _body;
     int   state;
 

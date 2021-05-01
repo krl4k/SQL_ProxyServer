@@ -16,12 +16,22 @@
 #include <arpa/inet.h>
 #endif
 
+#define BLACK "\x1B[30m"
+#define RED "\x1B[31m"
+#define GREEN "\x1B[32m"
+#define YELLOW "\x1B[33m"
+#define BLUE "\x1B[34m"
+#define MAGENTA "\x1B[35m"
+#define CYAN "\x1B[36m"
+#define WHITE "\x1B[37m"
+#define RESET "\x1B[0m"
+
 class Server {
 public:
 
     Server(char *filename);
-
     void start();
+
 
 private:
     std::string _serverHost;
@@ -30,6 +40,9 @@ private:
 	uint16_t    _dbPort;
 	int         _logFileFd;
 
+	fd_set _readFdSet;
+	fd_set _writeFdSet;
+
     int									_listenSocketFd;
 
     struct sockaddr_in  				_databaseAddr;
@@ -37,14 +50,14 @@ private:
     std::vector<Client *> 	_client;
     int						_maxFdSize;
 
-public:
+
 	int getListenSocketFd() const;
 
-private:
+
 
 	void parseConfig(std::string fileName);
 
-public:
+//public:
 	const std::string &getServerHost() const;
 
 	void setServerHost(const std::string &serverHost);
@@ -61,17 +74,20 @@ public:
 
 	void setDbPort(uint16_t dbPort);
 
+public:
+	void setMaxFdSize(int maxFdSize);
+
 private:
 
 	int createListenSocket();
 
 	[[noreturn]] void lifeStyle();
 
-    void initSocketSet(fd_set &set, fd_set &set1);
+    void initSocketSet();
 
-    void acceptNewClient(fd_set &readdSet);
+    void acceptNewClient();
 
-    void handler(fd_set &readFdSet, fd_set &writeFdSet);
+    void handler();
 
 	void initDbAddr();
 
