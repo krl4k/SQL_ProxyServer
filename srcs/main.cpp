@@ -1,9 +1,16 @@
 #include <iostream>
 #include <unistd.h>
 #include "Server.hpp"
+#include <csignal>
+
+void error_server(int sig){
+	exit(0);
+}
 
 int main(int argc, char **argv) {
 	if (argc == 2) {
+		signal(SIGTERM, error_server);
+		signal(SIGINT, error_server);
 		try {
 			Server server(argv[1]);
 			server.start();

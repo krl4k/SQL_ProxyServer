@@ -9,7 +9,7 @@
 #include <Client/Client.hpp>
 #include <vector>
 #include <netinet/in.h>
-
+#include <string>
 #if __APPLE__
 #include <dns_util.h>
 #elif __linux__
