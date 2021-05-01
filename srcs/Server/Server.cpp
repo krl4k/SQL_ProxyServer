@@ -149,6 +149,7 @@ void Server::acceptNewClient() {
 		if ((clientSocket = accept(getListenSocketFd(), nullptr, nullptr)) < 0){
 			std::cerr << "Client accept error!" << std::endl;
 		}
+//		fcntl(clientSocket, F_SETFL, O_NONBLOCK);
 		Client *newClient = new Client(clientSocket, _databaseAddr);
         _client.push_back(newClient);
         if (newClient->getSocket() > _maxFdSize)
@@ -171,8 +172,9 @@ void Server::handler() {
 			sendResponseToClient((*clientIter));
 		}
 		if ((*clientIter)->getState() == Client::State::CLOSE_CONNECTION) {
-			delete (*clientIter);
+			auto it = clientIter;
 			_client.erase(clientIter);
+			delete *it;
 		}
 	}
 }

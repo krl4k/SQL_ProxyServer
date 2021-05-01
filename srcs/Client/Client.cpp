@@ -12,6 +12,7 @@ Client::Client() {
 Client::~Client() {
 	close(_socket);
 	close(_database_Socket);
+	_body.clear();
 }
 
 Client::Client(int clientSocket, const sockaddr_in &addr) : _socket(clientSocket), _addr(addr) {
