@@ -53,10 +53,13 @@ int Client::getDatabaseSocket() const {
 }
 
 char *Client::getBody() const {
+	std::cout << "get Body:" << std::endl;
 	char *buf = new char[_body.size()];
 	for (int i = 0; i < _body.size(); ++i) {
 		buf[i] = _body[i];
+		std::cout << buf[i];
 	}
+	std::cout << std::endl;
 	return buf;
 
 }

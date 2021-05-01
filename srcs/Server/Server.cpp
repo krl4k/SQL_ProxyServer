@@ -200,8 +200,6 @@ void Server::readRequestFromClient(Client *&pClient) {
 	addToLogFile(pClient);
 
 	pClient->setState(Client::State::SEND_TO_DATABASE);
-//	FD_SET(pClient->getDatabaseSocket(), &_writeFdSet);
-//	setMaxFdSize(std::max(pClient->getDatabaseSocket(), _maxFdSize));
 }
 
 void Server::sendRequestToDB(Client *&pClient) {
