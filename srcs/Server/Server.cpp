@@ -216,13 +216,11 @@ void Server::readRequestFromDataBase(Client *&pClient) {
 	std::cout << YELLOW << "Read response from DB!" << RESET << std::endl;
 
 	char buf[BUFSIZ + 1];
-	int ret = 0;
-	ret = recv(pClient->getDatabaseSocket(), buf, BUFSIZ, 0);
+	int ret = recv(pClient->getDatabaseSocket(), buf, BUFSIZ, 0);
 	if (ret <= 0){
 		pClient->setState(Client::State::CLOSE_CONNECTION);
 		return;
 	}
-	buf[ret] = 0;
 	pClient->setBody(buf, ret);
 	pClient->setState(Client::State::SEND_TO_CLIENT);
 }
@@ -236,7 +234,21 @@ void Server::sendResponseToClient(Client *&pClient) {
 }
 
 void Server::addToLogFile(Client *&pClient) {
-	write(_logFileFd, pClient->getBody(), pClient->getBodySize());
+	std::string date;
+	time_t rawtime;
+	time(&rawtime);
+	date = ctime(&rawtime);
+	date.erase(date.size() - 1);
+	write(_logFileFd, "\n-----------------------------------------\n", 43);
+	write(_logFileFd, "Data: ", 5);
+	write(_logFileFd, date.c_str(), date.size());
+	write(_logFileFd, "\n", 1);
+	char *log = pClient->getBody();
+	for (int i = 5; i < pClient->getBodySize() - 1; ++i) {
+		write(_logFileFd, &log[i], 1);
+	}
+//	write(_logFileFd, pClient->getBody(), pClient->getBodySize());
+	write(_logFileFd, "\n-----------------------------------------\n", 43);
 }
 
 uint16_t Server::convertPort(const std::string &port) {

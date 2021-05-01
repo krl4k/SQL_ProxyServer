@@ -62,7 +62,6 @@ char *Client::getBody() const {
 	}
 	std::cout << std::endl;
 	return buf;
-
 }
 
 int Client::getBodySize() const {
