@@ -7,13 +7,24 @@ using namespace boost::asio;
 
 //#define BOOST_ASIO_DISABLE_THREADS
 //#define BOOST_ASIO_SEPARATE_COMPILATION
-
 //#undef BOOST_ASIO_HEADER_ONLY
 
-void
+io_service service;
+
+
+
+void read_write_tcp(){
+	ip::tcp::endpoint ep( ip::address::from_string("127.0.0.1"), 80);
+	ip::tcp::socket sock(service);
+	sock.connect(ep);
+	sock.write_some(buffer("GET /index.html\r\n"));
+	std::cout << "bytes available " << sock.available() << std::endl;
+	char buff[512];
+	size_t read = sock.read_some(buffer(buff));
+	std::cout << "buffer:\n" << buff << std::endl;
+}
 
 void test(){
-	io_service service;
 
 	ip::tcp::endpoint ep( ip::address::from_string("127.0.0.1"), 80);
 	ip::tcp::socket sock(service);
@@ -32,8 +43,8 @@ void test(){
 
 int main() {
 
-	test();
-
+//	test();
+	read_write_tcp();
 //	ip::address address = ip::address::from_string("127.0.0.1");
 //	ip::tcp::endpoint ep(address, 8080);
 //

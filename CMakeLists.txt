@@ -18,7 +18,25 @@ link_directories(./ ${SURS} ${SURS_CLASSES})
 ##        test.cpp
 #        )
 
-set(CMAKE_CXX_FLAGS "-pthread")
+#set(CMAKE_CXX_FLAGS "-pthread")
+#set(CMAKE_CXX_FLAGS "-lpthread")
+#set(CMAKE_CXX_FLAGS "-lboost_system -lboost_thread")
+#set(CMAKE_CXX_FLAGS "-D_GLIBCXX_USE_NANOSLEEP")
+#set(CMAKE_CXX_FLAGS "-lboost_system -lboost_thread -lm  -lc")
+
+set(CMAKE_CXX_FLAGS "-lrt -lm  -lboost_thread -lpthread")
+
 
 add_executable(boost_test
-        boostTest/main.cpp)
+#        boostTest/main.cpp
+        boostTest/tcpClient.cpp
+        )
+
+add_executable(server
+        boostTest/tcpServer.cpp
+        )
+add_executable(client
+        boostTest/tcpClient.cpp
+        )
+
+#target_link_libraries("-lm")
