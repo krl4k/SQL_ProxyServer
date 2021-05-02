@@ -11,9 +11,11 @@
 #include <netinet/in.h>
 #include <string>
 #if __APPLE__
-#include <dns_util.h>
+	#include <dns_util.h>
 #elif __linux__
-#include <arpa/inet.h>
+	#include <arpa/inet.h>
+#include <list>
+
 #endif
 
 #define BLACK "\x1B[30m"
@@ -48,6 +50,8 @@ private:
     struct sockaddr_in  				_databaseAddr;
 
     std::vector<Client *> 	_client;
+
+//    std::list<Client *> 	_client;
     int						_maxFdSize;
 
 

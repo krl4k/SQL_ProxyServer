@@ -64,11 +64,10 @@ void Server::start() {
 int Server::createListenSocket() {
     struct sockaddr_in servaddr;
 
-    if ((_listenSocketFd = socket(PF_INET, SOCK_STREAM, 0)) < 0){
+    if ((_listenSocketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0){
         std::cerr << "fatal error! socket!" << std::endl;
         return -1;
     }
-//    std::fill
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = inet_addr(_serverHost.c_str());
@@ -89,14 +88,15 @@ int Server::createListenSocket() {
         }
         return -2;
     }
-    if (fcntl(_listenSocketFd, F_SETFL, O_NONBLOCK) < 0) {
+//    if (fcntl(_listenSocketFd, F_SETFL, O_NONBLOCK) < 0) {
+    if (fcntl(_listenSocketFd, F_SETFL, fcntl(_listenSocketFd, F_GETFL, 0) | O_NONBLOCK) < 0) {
         std::cerr << "fcntl error" << std::endl;
         if (close(_listenSocketFd) < 0){
             std::cerr << "error close" << std::endl;
         }
         return -3;
     }
-    if (listen(_listenSocketFd, 1024) < 0){
+    if (listen(_listenSocketFd, 128) < 0){
         std::cerr << "listen error!" << std::endl;
         if (close(_listenSocketFd) < 0){
             std::cerr << "error close" << std::endl;
@@ -111,7 +111,8 @@ void Server::lifeStyle() {
 
 	while (true) {
        	std::cout << "\nWaiting for connection! " <<"Clients count = " << _client.size() << std::endl;
-        initSocketSet();
+		_maxFdSize = _listenSocketFd;
+		initSocketSet();
 
 		select(_maxFdSize + 1, &_readFdSet, &_writeFdSet, NULL, NULL);
 
@@ -128,21 +129,25 @@ void Server::initSocketSet() {
 	FD_ZERO(&_writeFdSet);
 
     FD_SET(_listenSocketFd, &_readFdSet);
-    for (auto & i : _client) {
-    	if (i->getState() == Client::State::READ_FROM_CLIENT){
-			FD_SET(i->getSocket(), &_readFdSet);
-			setMaxFdSize(std::max(i->getSocket(), _maxFdSize));
-    	}else if (i->getState() == Client::State::SEND_TO_DATABASE){
-			FD_SET(i->getDatabaseSocket(), &_writeFdSet);
-			setMaxFdSize(std::max(i->getDatabaseSocket(), _maxFdSize));
-		}else if (i->getState() == Client::State::READ_FROM_DATABASE){
-			FD_SET(i->getDatabaseSocket(), &_readFdSet);
-			setMaxFdSize(std::max(i->getDatabaseSocket(), _maxFdSize));
-		}else if (i->getState() == Client::State::SEND_TO_CLIENT){
-			FD_SET(i->getSocket(), &_writeFdSet);
-			setMaxFdSize(std::max(i->getSocket(), _maxFdSize));
+	for (int i = 0; i < _client.size(); ++i){
+		Client * client = _client[i];
+		if (client->getState() == Client::State::READ_FROM_CLIENT){
+			FD_SET(client->getSocket(), &_readFdSet);
+			setMaxFdSize(std::max(client->getSocket(), _maxFdSize));
+
+		}else if (client->getState() == Client::State::SEND_TO_DATABASE){
+			FD_SET(client->getDatabaseSocket(), &_writeFdSet);
+			setMaxFdSize(std::max(client->getDatabaseSocket(), _maxFdSize));
+
+		}else if (client->getState() == Client::State::READ_FROM_DATABASE){
+			FD_SET(client->getDatabaseSocket(), &_readFdSet);
+			setMaxFdSize(std::max(client->getDatabaseSocket(), _maxFdSize));
+
+		}else if (client->getState() == Client::State::SEND_TO_CLIENT){
+			FD_SET(client->getSocket(), &_writeFdSet);
+			setMaxFdSize(std::max(client->getSocket(), _maxFdSize));
 		}
-    }
+	}
 }
 
 void Server::acceptNewClient() {
@@ -152,7 +157,7 @@ void Server::acceptNewClient() {
 		if ((clientSocket = accept(getListenSocketFd(), nullptr, nullptr)) < 0){
 			std::cerr << "Client accept error!" << std::endl;
 		}
-//		fcntl(clientSocket, F_SETFL, O_NONBLOCK);
+		fcntl(clientSocket, F_SETFL, O_NONBLOCK);
 		Client *newClient = new Client(clientSocket, _databaseAddr);
         _client.push_back(newClient);
         if (newClient->getSocket() > _maxFdSize)
@@ -161,23 +166,23 @@ void Server::acceptNewClient() {
 }
 
 void Server::handler() {
-	for (auto clientIter = _client.begin(); !_client.empty() && clientIter != _client.end(); ++clientIter) {
-		if (FD_ISSET((*clientIter)->getSocket(), &_readFdSet) && (*clientIter)->getState() == Client::State::READ_FROM_CLIENT) {
-			readRequestFromClient((*clientIter));
+	for (int i = 0; i < _client.size(); ++i){
+		if (FD_ISSET((_client[i])->getSocket(), &_readFdSet) and (_client[i])->getState() == Client::State::READ_FROM_CLIENT) {
+			readRequestFromClient((_client[i]));
 		}
-		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_writeFdSet) and (*clientIter)->getState() == Client::State::SEND_TO_DATABASE){
-			sendRequestToDB((*clientIter));
+		if (FD_ISSET((_client[i])->getDatabaseSocket(), &_writeFdSet) and (_client[i])->getState() == Client::State::SEND_TO_DATABASE){
+			sendRequestToDB((_client[i]));
 		}
-		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_readFdSet) and (*clientIter)->getState() == Client::State::READ_FROM_DATABASE) {
-			readRequestFromDataBase((*clientIter));
+		if (FD_ISSET((_client[i])->getDatabaseSocket(), &_readFdSet) and (_client[i])->getState() == Client::State::READ_FROM_DATABASE) {
+			readRequestFromDataBase((_client[i]));
 		}
-		if (FD_ISSET((*clientIter)->getSocket(), &_writeFdSet) and (*clientIter)->getState() == Client::State::SEND_TO_CLIENT) {
-			sendResponseToClient((*clientIter));
+		if (FD_ISSET((_client[i])->getSocket(), &_writeFdSet) and (_client[i])->getState() == Client::State::SEND_TO_CLIENT) {
+			sendResponseToClient((_client[i]));
 		}
-		if ((*clientIter)->getState() == Client::State::CLOSE_CONNECTION) {
-			auto it = clientIter;
-			_client.erase(clientIter);
+		if ((_client[i])->getState() == Client::State::CLOSE_CONNECTION) {
+			auto it = _client.begin() + i;
 			delete *it;
+			_client.erase(it);
 		}
 	}
 }
@@ -192,24 +197,33 @@ void Server::initDbAddr(){
 
 void Server::readRequestFromClient(Client *&pClient) {
 	std::cout << MAGENTA << "Read request from client!" << RESET << std::endl;
-	char buf[BUFSIZ + 1];
+	char buf[BUFSIZ];
 	int ret = 0;
 
 	ret = recv(pClient->getSocket(), buf, BUFSIZ, 0);
+//	std::cout << "read!:" << std::endl;
+//	for (int i = 0; i < ret; ++i)
+//	{
+//		std::cout << buf[i];
+//	}
+	std::cout << std::endl;
 	if (ret <= 0){
 		pClient->setState(Client::State::CLOSE_CONNECTION);
 		return;
 	}
 	buf[ret] = 0;
 	pClient->setBody(buf, ret);
-	addToLogFile(pClient);
+	if (buf[4] == 3)
+		addToLogFile(pClient);
 
 	pClient->setState(Client::State::SEND_TO_DATABASE);
 }
 
 void Server::sendRequestToDB(Client *&pClient) {
 	std::cout << YELLOW << "Send request to DB!" << RESET << std::endl;
-	send(pClient->getDatabaseSocket(), pClient->getBody(), pClient->getBodySize(), 0);
+	char * temp = pClient->getBody();
+	send(pClient->getDatabaseSocket(), temp, pClient->getBodySize(), 0);
+	free(temp);
 	pClient->clearBody();
 
 	pClient->setState(Client::State::READ_FROM_DATABASE);
@@ -218,7 +232,7 @@ void Server::sendRequestToDB(Client *&pClient) {
 void Server::readRequestFromDataBase(Client *&pClient) {
 	std::cout << YELLOW << "Read response from DB!" << RESET << std::endl;
 
-	char buf[BUFSIZ + 1];
+	char buf[BUFSIZ];
 	int ret = recv(pClient->getDatabaseSocket(), buf, BUFSIZ, 0);
 	if (ret <= 0){
 		pClient->setState(Client::State::CLOSE_CONNECTION);
