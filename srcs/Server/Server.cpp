@@ -167,19 +167,19 @@ void Server::handler() {
 	for (auto clientIter = _client.begin(); !_client.empty() && clientIter != _client.end(); ++clientIter) {
 		if (FD_ISSET((*clientIter)->getSocket(), &_readFdSet)) {// && (*clientIter)->getState() == Client::State::READ_FROM_CLIENT
 			readRequestFromClient((*clientIter));
-			FD_SET((*clientIter)->getSocket(), &_readFdSet);
+//			FD_SET((*clientIter)->getSocket(), &_readFdSet);
 		}
 		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_writeFdSet)){//and (*clientIter)->getState() == Client::State::SEND_TO_DATABASE
 			sendRequestToDB((*clientIter));
-			FD_SET((*clientIter)->getDatabaseSocket(), &_writeFdSet);
+//			FD_SET((*clientIter)->getDatabaseSocket(), &_writeFdSet);
 		}
 		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_readFdSet)){//and (*clientIter)->getState() == Client::State::READ_FROM_DATABASE
 			readRequestFromDataBase((*clientIter));
-			FD_SET((*clientIter)->getDatabaseSocket(), &_readFdSet);
+//			FD_SET((*clientIter)->getDatabaseSocket(), &_readFdSet);
 		}
 		if (FD_ISSET((*clientIter)->getSocket(), &_writeFdSet)) {// and (*clientIter)->getState() == Client::State::SEND_TO_CLIENT
 			sendResponseToClient((*clientIter));
-			FD_SET((*clientIter)->getSocket(), &_writeFdSet);
+//			FD_SET((*clientIter)->getSocket(), &_writeFdSet);
 		}
 		if ((*clientIter)->getState() == Client::State::CLOSE_CONNECTION){
 			delete *clientIter;
