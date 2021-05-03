@@ -3,12 +3,12 @@ project(sql_tcp_server)
 set(EXECUTABLE_NAME "sql_tcp_server")
 
 set(CMAKE_CXX_STANDARD 14)
-set(SURS  ${CMAKE_CURRENT_SOURCE_DIR}/srcs/)
-
-set(SURS_CLASSES ${SURS}Server/ ${SURS}/Client)
-
-include_directories(./ ${SURS} ${SURS_CLASSES})
-link_directories(./ ${SURS} ${SURS_CLASSES})
+#set(SURS  ${CMAKE_CURRENT_SOURCE_DIR}/srcs/)
+#
+#set(SURS_CLASSES ${SURS}Server/ ${SURS}/Client)
+#
+#include_directories(./ ${SURS} ${SURS_CLASSES})
+#link_directories(./ ${SURS} ${SURS_CLASSES})
 
 #
 #add_executable(${EXECUTABLE_NAME}
@@ -24,7 +24,7 @@ link_directories(./ ${SURS} ${SURS_CLASSES})
 #set(CMAKE_CXX_FLAGS "-D_GLIBCXX_USE_NANOSLEEP")
 #set(CMAKE_CXX_FLAGS "-lboost_system -lboost_thread -lm  -lc")
 
-set(CMAKE_CXX_FLAGS "-lrt -lm  -lboost_thread -lpthread")
+set(CMAKE_CXX_FLAGS "-pthread")
 
 
 #add_executable(boost_test
@@ -42,6 +42,9 @@ set(CMAKE_CXX_FLAGS "-lrt -lm  -lboost_thread -lpthread")
 add_executable(ProxyServer
         srcBoostProxyServer/ProxyServer.cpp
         srcBoostProxyServer/Connector.cpp
+        srcBoostProxyServer/Connector_data_from_Client_to_DB.cpp
+        srcBoostProxyServer/Connector_data_from_DB_toClient.cpp
+        srcBoostProxyServer/main.cpp
         )
 
 #target_link_libraries("-lm")

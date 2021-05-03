@@ -6,18 +6,19 @@
 #define SQL_TCP_SERVER_CONNECTOR_H
 
 
-#define BUFSIZE 2048
+#define BUFSIZE 10009
 #include <iostream>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 
 
-class Connector : public boost::enable_shared_from_this<Connector>, boost::noncopyable
+class Connector : public boost::enable_shared_from_this<Connector>
 {
 public:
 
@@ -34,27 +35,42 @@ public:
 
 	void handle_connect(const error_code &errorCode);
 
-	const tcp_socket &getDatabaseSocket() const;
+	tcp_socket &getClientToDatabaseSocket();
 
-	const tcp_socket &getClientSocket() const;
+	tcp_socket &getDatabaseToClientSocket() ;
 
 	void closeConnection();
 
 
 private:
-	tcp_socket _client_to_database_Socket;
-	tcp_socket _database_to_client_Socket;
-	char *_data_from_Client_toDB[BUFSIZE];
-	char *_data_fromDB_toClient[BUFSIZE];
+	tcp_socket _upstream_socket;
+	tcp_socket _downstram_socket;
+	char *_upstreamData[BUFSIZE];
+	char *_downstreamData[BUFSIZE];
 	boost::mutex _mutex;
 	std::string _dbHost;
 	std::string _dbPort;
 
+
+	/*
+	 *  database -> proxy -> client
+	 */
+
 	void sendData_toClient(const boost::system::error_code& error,
 							  const size_t& bytes);
 
-
 	void readData_fromDB(const boost::system::error_code& error);
+
+
+	/*
+	 *  client -> proxy -> database
+	 */
+
+	void sendData_toDB(const boost::system::error_code& error,
+						   const size_t& bytes);
+
+
+	void readData_fromClient(const boost::system::error_code& error);
 
 };
 
