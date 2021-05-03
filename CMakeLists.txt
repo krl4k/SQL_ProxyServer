@@ -27,20 +27,21 @@ link_directories(./ ${SURS} ${SURS_CLASSES})
 set(CMAKE_CXX_FLAGS "-lrt -lm  -lboost_thread -lpthread")
 
 
-add_executable(boost_test
-#        boostTest/main.cpp
-        boostTest/tcpClient.cpp
-        )
-
-add_executable(server
-        boostTest/tcpServer.cpp
-        )
-add_executable(client
-        boostTest/tcpClient.cpp
-        )
+#add_executable(boost_test
+##        boostTest/main.cpp
+#        boostTest/tcpClient.cpp
+#        )
+#
+#add_executable(server
+#        boostTest/tcpServer.cpp
+#        )
+#add_executable(client
+#        boostTest/tcpClient.cpp
+#        )
 
 add_executable(ProxyServer
-        boostTest/tcpClient.cpp
+        srcBoostProxyServer/ProxyServer.cpp
+        srcBoostProxyServer/Connector.cpp
         )
 
 #target_link_libraries("-lm")
