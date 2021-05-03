@@ -6,14 +6,24 @@
 #define UNTITLED1_SERVER_H
 
 #include <iostream>
-#include <Client/Client.hpp>
+#include <Client.hpp>
 #include <vector>
 #include <netinet/in.h>
 #include <string>
+
+
+#include <fstream>
+#include <sys/fcntl.h>
+#include <unistd.h>
+#include <cstring>
+#include <csignal>
+
 #if __APPLE__
 #include <dns_util.h>
 #elif __linux__
 #include <arpa/inet.h>
+#include <list>
+
 #endif
 
 #define BLACK "\x1B[30m"
@@ -25,6 +35,8 @@
 #define CYAN "\x1B[36m"
 #define WHITE "\x1B[37m"
 #define RESET "\x1B[0m"
+
+#define BUF_SIZE 10000
 
 class Server {
 public:
@@ -47,7 +59,7 @@ private:
 
     struct sockaddr_in  				_databaseAddr;
 
-    std::vector<Client *> 	_client;
+    std::list<Client *> 	_client;
     int						_maxFdSize;
 
 
@@ -55,7 +67,7 @@ private:
 
 
 
-	void parseConfig(std::string fileName);
+	void parseConfig(const std::string& fileName);
 
 //public:
 	const std::string &getServerHost() const;

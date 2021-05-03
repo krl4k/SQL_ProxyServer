@@ -2,14 +2,17 @@
 // Created by Foster Grisella on 4/30/21.
 //
 
-#include <fstream>
-#include <sys/fcntl.h>
-#include <unistd.h>
-#include <cstring>
 #include "Server.hpp"
 
-Server::Server(char *filename) : _serverPort(0), _serverHost(""), _dbPort(0), _dbHost("") {
-    try {
+void error_server(int sig){
+	exit(0);
+}
+
+Server::Server(char *filename) : _serverPort(0), _serverHost(""), _dbPort(0), _dbHost(""), _client() {
+	signal(SIGPIPE, error_server);
+	signal(SIGTERM, error_server);
+	signal(SIGINT, error_server);
+	try {
         parseConfig(filename);
 		if (createListenSocket() < 0)
 			throw std::exception();
@@ -19,7 +22,7 @@ Server::Server(char *filename) : _serverPort(0), _serverHost(""), _dbPort(0), _d
     }
 }
 
-void Server::parseConfig(std::string fileName) {
+void Server::parseConfig(const std::string& fileName) {
     std::ifstream file(fileName);
     if (!file.is_open())
         throw std::runtime_error("File not found!!!");
@@ -31,30 +34,38 @@ void Server::parseConfig(std::string fileName) {
     file.close();
     if ("proxy_host: " == strings[0].substr(0, 12)){
 		_serverHost = std::string(strings[0], 12);
-    }
-    if ("proxy_port: " == strings[1].substr(0, 12)){
+    }else
+		throw std::exception();
+
+	if ("proxy_port: " == strings[1].substr(0, 12)){
         std::string port = strings[1].substr(12);
         if ((_serverPort = convertPort(port)) < 0)
 			throw std::exception();
-    }
+    }else
+		throw std::exception();
+
 	if ("database_host: " == strings[2].substr(0, 15)){
 		_dbHost = std::string(strings[2], 15);
 	}
+	else
+		throw std::exception();
 	if ("database_port: " == strings[3].substr(0, 15)){
 		std::string port = strings[3].substr(15);
 		if ((_dbPort = convertPort(port)) < 0)
 			throw std::exception();
-	}
+	}else
+		throw std::exception();
     if ("log_file: " == strings[4].substr(0, 10)){
         std::string logFile(strings[4], 10);
         if ((_logFileFd = open(logFile.c_str(), O_WRONLY | O_TRUNC)) < 0){
             throw std::runtime_error("logFile error not opened!!!");
         }
-    }
-    if (_serverHost.empty() || _dbHost.empty()){
+    }else
+		throw std::exception();
+
+	if (_serverHost.empty() || _dbHost.empty()){
 		throw std::runtime_error("Host error!!!");
     }
-    file.close();
 }
 
 void Server::start() {
@@ -62,41 +73,38 @@ void Server::start() {
 }
 
 int Server::createListenSocket() {
-    struct sockaddr_in servaddr;
+    struct sockaddr_in servaddr{};
 
-    if ((_listenSocketFd = socket(PF_INET, SOCK_STREAM, 0)) < 0){
+    if ((_listenSocketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0){
         std::cerr << "fatal error! socket!" << std::endl;
         return -1;
     }
-//    std::fill
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(_serverHost.c_str());
-    servaddr.sin_port = htons(_serverPort);
-    int yes = 1;
+	servaddr.sin_addr.s_addr = inet_addr(_serverHost.c_str());
+	servaddr.sin_port = htons(_serverPort);
+
+	int yes = 1;
     if (setsockopt(_listenSocketFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
     {
         std::cerr << "error setsockopt" << std::endl;
-        if (close(_listenSocketFd) < 0){
+        if (close(_listenSocketFd) < 0)
             std::cerr << "error close" << std::endl;
-        }
         return -2;
     }
     if ((bind(_listenSocketFd, (struct sockaddr * )&servaddr, sizeof servaddr)) < 0){
-        std::cerr << "bind error" << strerror(errno) << std::endl;
-        if (close(_listenSocketFd) < 0){
+        std::cerr << "bind error" << std::endl;
+        if (close(_listenSocketFd) < 0)
             std::cerr << "error close" << std::endl;
-        }
         return -2;
     }
     if (fcntl(_listenSocketFd, F_SETFL, O_NONBLOCK) < 0) {
         std::cerr << "fcntl error" << std::endl;
-        if (close(_listenSocketFd) < 0){
+        if (close(_listenSocketFd) < 0)
             std::cerr << "error close" << std::endl;
-        }
         return -3;
     }
-    if (listen(_listenSocketFd, 1024) < 0){
+    if (listen(_listenSocketFd, 128) < 0){
         std::cerr << "listen error!" << std::endl;
         if (close(_listenSocketFd) < 0){
             std::cerr << "error close" << std::endl;
@@ -116,68 +124,66 @@ void Server::lifeStyle() {
 		select(_maxFdSize + 1, &_readFdSet, &_writeFdSet, NULL, NULL);
 
 		acceptNewClient();
-
-        handler();
-    }
+		handler();
+	}
 }
 
 void Server::initSocketSet() {
-	_maxFdSize = getListenSocketFd();
+	_maxFdSize = _listenSocketFd;
 
 	FD_ZERO(&_readFdSet);
 	FD_ZERO(&_writeFdSet);
 
-    FD_SET(_listenSocketFd, &_readFdSet);
+	FD_SET(_listenSocketFd, &_readFdSet);
+
     for (auto & i : _client) {
     	if (i->getState() == Client::State::READ_FROM_CLIENT){
 			FD_SET(i->getSocket(), &_readFdSet);
-			setMaxFdSize(std::max(i->getSocket(), _maxFdSize));
     	}else if (i->getState() == Client::State::SEND_TO_DATABASE){
 			FD_SET(i->getDatabaseSocket(), &_writeFdSet);
-			setMaxFdSize(std::max(i->getDatabaseSocket(), _maxFdSize));
 		}else if (i->getState() == Client::State::READ_FROM_DATABASE){
 			FD_SET(i->getDatabaseSocket(), &_readFdSet);
-			setMaxFdSize(std::max(i->getDatabaseSocket(), _maxFdSize));
 		}else if (i->getState() == Client::State::SEND_TO_CLIENT){
 			FD_SET(i->getSocket(), &_writeFdSet);
-			setMaxFdSize(std::max(i->getSocket(), _maxFdSize));
 		}
-    }
+		setMaxFdSize(std::max(i->getSocket(), _maxFdSize));
+	}
 }
 
 void Server::acceptNewClient() {
     if (FD_ISSET(_listenSocketFd, &_readFdSet))
     {
 		int clientSocket;
-		if ((clientSocket = accept(getListenSocketFd(), nullptr, nullptr)) < 0){
+		if ((clientSocket = accept(_listenSocketFd, nullptr, nullptr)) < 0){
 			std::cerr << "Client accept error!" << std::endl;
 		}
-//		fcntl(clientSocket, F_SETFL, O_NONBLOCK);
-		Client *newClient = new Client(clientSocket, _databaseAddr);
-        _client.push_back(newClient);
-        if (newClient->getSocket() > _maxFdSize)
-            _maxFdSize = newClient->getSocket();
+		fcntl(clientSocket, F_SETFL, O_NONBLOCK);
+        _client.push_back(new Client(clientSocket, _databaseAddr));
+		setMaxFdSize(std::max(clientSocket, _maxFdSize));
     }
 }
 
 void Server::handler() {
 	for (auto clientIter = _client.begin(); !_client.empty() && clientIter != _client.end(); ++clientIter) {
-		if (FD_ISSET((*clientIter)->getSocket(), &_readFdSet) && (*clientIter)->getState() == Client::State::READ_FROM_CLIENT) {
+		if (FD_ISSET((*clientIter)->getSocket(), &_readFdSet)) {// && (*clientIter)->getState() == Client::State::READ_FROM_CLIENT
 			readRequestFromClient((*clientIter));
+			FD_SET((*clientIter)->getSocket(), &_readFdSet);
 		}
-		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_writeFdSet) and (*clientIter)->getState() == Client::State::SEND_TO_DATABASE){
+		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_writeFdSet)){//and (*clientIter)->getState() == Client::State::SEND_TO_DATABASE
 			sendRequestToDB((*clientIter));
+			FD_SET((*clientIter)->getDatabaseSocket(), &_writeFdSet);
 		}
-		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_readFdSet) and (*clientIter)->getState() == Client::State::READ_FROM_DATABASE) {
+		if (FD_ISSET((*clientIter)->getDatabaseSocket(), &_readFdSet)){//and (*clientIter)->getState() == Client::State::READ_FROM_DATABASE
 			readRequestFromDataBase((*clientIter));
+			FD_SET((*clientIter)->getDatabaseSocket(), &_readFdSet);
 		}
-		if (FD_ISSET((*clientIter)->getSocket(), &_writeFdSet) and (*clientIter)->getState() == Client::State::SEND_TO_CLIENT) {
+		if (FD_ISSET((*clientIter)->getSocket(), &_writeFdSet)) {// and (*clientIter)->getState() == Client::State::SEND_TO_CLIENT
 			sendResponseToClient((*clientIter));
+			FD_SET((*clientIter)->getSocket(), &_writeFdSet);
 		}
-		if ((*clientIter)->getState() == Client::State::CLOSE_CONNECTION) {
-			auto it = clientIter;
+		if ((*clientIter)->getState() == Client::State::CLOSE_CONNECTION){
+			delete *clientIter;
 			_client.erase(clientIter);
-			delete *it;
 		}
 	}
 }
@@ -192,24 +198,29 @@ void Server::initDbAddr(){
 
 void Server::readRequestFromClient(Client *&pClient) {
 	std::cout << MAGENTA << "Read request from client!" << RESET << std::endl;
-	char buf[BUFSIZ + 1];
+	char buf[BUF_SIZE];
 	int ret = 0;
 
-	ret = recv(pClient->getSocket(), buf, BUFSIZ, 0);
+	ret = recv(pClient->getSocket(), buf, BUF_SIZE, 0);
 	if (ret <= 0){
 		pClient->setState(Client::State::CLOSE_CONNECTION);
 		return;
 	}
-	buf[ret] = 0;
 	pClient->setBody(buf, ret);
-	addToLogFile(pClient);
+	//todo
+//	addToLogFile(pClient);
 
 	pClient->setState(Client::State::SEND_TO_DATABASE);
 }
 
 void Server::sendRequestToDB(Client *&pClient) {
 	std::cout << YELLOW << "Send request to DB!" << RESET << std::endl;
-	send(pClient->getDatabaseSocket(), pClient->getBody(), pClient->getBodySize(), 0);
+	ssize_t snd = send(pClient->getDatabaseSocket(), pClient->getBody(), pClient->getBodySize(), 0);
+	if (snd <= 0){
+		pClient->setState(Client::State::CLOSE_CONNECTION);
+	}
+	if (snd == pClient->getBodySize())
+		std::cout << "SIZE equals" << std::endl;
 	pClient->clearBody();
 
 	pClient->setState(Client::State::READ_FROM_DATABASE);
@@ -218,8 +229,8 @@ void Server::sendRequestToDB(Client *&pClient) {
 void Server::readRequestFromDataBase(Client *&pClient) {
 	std::cout << YELLOW << "Read response from DB!" << RESET << std::endl;
 
-	char buf[BUFSIZ + 1];
-	int ret = recv(pClient->getDatabaseSocket(), buf, BUFSIZ, 0);
+	char buf[BUF_SIZE];
+	int ret = recv(pClient->getDatabaseSocket(), buf, BUF_SIZE, 0);
 	if (ret <= 0){
 		pClient->setState(Client::State::CLOSE_CONNECTION);
 		return;
@@ -230,9 +241,15 @@ void Server::readRequestFromDataBase(Client *&pClient) {
 
 void Server::sendResponseToClient(Client *&pClient) {
 	std::cout << YELLOW << "Send response to Client!" << RESET << std::endl;
-	send(pClient->getSocket(), pClient->getBody(), pClient->getBodySize(), 0);
-	pClient->clearBody();
+	ssize_t snd = send(pClient->getSocket(), pClient->getBody(), pClient->getBodySize(), 0);
+	if (snd <= 0)
+	{
+		pClient->setState(Client::State::CLOSE_CONNECTION);
+	}
+	if (snd == pClient->getBodySize())
+		std::cout << "SIZE equals" << std::endl;
 
+	pClient->clearBody();
 	pClient->setState(Client::State::READ_FROM_CLIENT);
 }
 

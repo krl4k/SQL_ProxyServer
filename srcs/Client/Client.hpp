@@ -15,7 +15,6 @@
 class Client {
 public:
 	enum State {
-		START,
 		READ_FROM_CLIENT,
 		READ_FROM_DATABASE,
 		SEND_TO_CLIENT,
@@ -51,9 +50,9 @@ private:
     std::vector<char> _body;
     int   state;
 
-	Client();
-	Client(const Client &other);
-	Client &operator=(const Client &other);
+	Client() = delete;
+	Client(const Client &other) = delete;
+	Client &operator=(const Client &other) = delete;
 
 };
 

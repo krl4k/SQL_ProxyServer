@@ -5,9 +5,6 @@
 #include <iostream>
 #include "Client.hpp"
 
-Client::Client() {
-
-}
 
 Client::~Client() {
 	close(_socket);
