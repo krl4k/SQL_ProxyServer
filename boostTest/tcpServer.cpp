@@ -4,6 +4,8 @@
 #include <boost/asio.hpp>
 #include <boost/phoenix/bind/bind_member_variable.hpp>
 #include <boost/asio/io_service.hpp>
+#include <boost/bind.hpp>
+
 
 
 using namespace boost::asio;
