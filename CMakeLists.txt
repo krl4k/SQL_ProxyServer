@@ -39,4 +39,8 @@ add_executable(client
         boostTest/tcpClient.cpp
         )
 
+add_executable(ProxyServer
+        boostTest/tcpClient.cpp
+        )
+
 #target_link_libraries("-lm")
