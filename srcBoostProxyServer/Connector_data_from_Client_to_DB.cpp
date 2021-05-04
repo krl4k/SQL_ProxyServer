@@ -8,17 +8,18 @@
 void Connector::sendData_toDB(const boost::system::error_code &error, const size_t &bytes)
 {
 	std::cout << "send data to db!" << std::endl;
-	if (error)
-		closeConnection();
-	else{
+	if (!error){
+		// error bytes (BUFSIZE!!!!! shit)
+		_bytesCount = bytes;
 		boost::asio::async_write(
 				_upstream_socket,
-				boost::asio::buffer(_downstreamData, BUFSIZE),
+				boost::asio::buffer(_downstreamData, bytes),
 				boost::bind(&Connector::readData_fromClient,
 				shared_from_this(),
 				boost::asio::placeholders::error));
-		//todo add logger!!!
-	}
+		std::cout << std::endl;
+	}else
+		closeConnection();
 }
 
 void Connector::readData_fromClient(const boost::system::error_code &error)
@@ -33,5 +34,10 @@ void Connector::readData_fromClient(const boost::system::error_code &error)
 				shared_from_this(),
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred));
+		//todo add logger!!!
+		for (size_t i = 0; i < _bytesCount; ++i)
+		{
+			std::cout << _downstreamData[i];
+		}
 	}
 }

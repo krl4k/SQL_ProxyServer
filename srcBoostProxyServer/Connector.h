@@ -45,11 +45,10 @@ public:
 private:
 	tcp_socket _upstream_socket;
 	tcp_socket _downstram_socket;
-	char *_upstreamData[BUFSIZE];
-	char *_downstreamData[BUFSIZE];
+	char _upstreamData[BUFSIZE];
+	char _downstreamData[BUFSIZE];
+	size_t _bytesCount;
 	boost::mutex _mutex;
-	std::string _dbHost;
-	std::string _dbPort;
 
 
 	/*

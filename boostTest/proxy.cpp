@@ -265,7 +265,9 @@ namespace tcp_proxy
 
 					acceptor_.async_accept(
 							session_->downstream_socket(),
-							boost::bind(&acceptor::handle_accept,this,boost::asio::placeholders::error));
+							boost::bind(&acceptor::handle_accept,
+				   				this,
+				   					 boost::asio::placeholders::error));
 				}
 				catch (std::exception &e)
 				{
