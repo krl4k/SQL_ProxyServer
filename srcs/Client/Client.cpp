@@ -13,7 +13,7 @@ Client::~Client() {
 }
 
 Client::Client(int clientSocket, const sockaddr_in &addr) : _socket(clientSocket), _addr(addr) {
-	if ((_database_Socket = socket(PF_INET, SOCK_STREAM, 0)) < 0){
+	if ((_database_Socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0){
 		std::cerr << "fatal error! socket!" << std::endl;
 		exit(-1);
 	}
@@ -55,7 +55,7 @@ char *Client::getBody() const {
 	char *buf = new char[_body.size()];
 	for (int i = 0; i < _body.size(); ++i) {
 		buf[i] = _body[i];
-		std::cout << buf[i];
+//		std::cout << buf[i];
 	}
 	std::cout << std::endl;
 	return buf;

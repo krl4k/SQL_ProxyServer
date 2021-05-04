@@ -42,7 +42,6 @@ public:
 	void clearBody();
 
 private:
-
     int _socket;
 	sockaddr_in _addr;
 	int _database_Socket;
