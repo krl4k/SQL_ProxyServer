@@ -29,6 +29,8 @@ public:
 
 	bool acceptConnection();
 
+	virtual ~ProxyServer();
+
 private:
 
 	void accept_handler(const boost::system::error_code &error);

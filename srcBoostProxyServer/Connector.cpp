@@ -5,9 +5,9 @@
 #include "Connector.h"
 
 
-Connector::Connector(boost::asio::io_service &ioService) :
+Connector::Connector(boost::asio::io_service &ioService, int logFileFd) :
 		_downstram_socket(ioService), _upstream_socket(ioService), _mutex(),
-		_bytesCount(0)
+		_bytesCount(0), _logFileFd(logFileFd)
 {
 }
 
@@ -15,7 +15,6 @@ Connector::Connector(boost::asio::io_service &ioService) :
 
 void Connector::start(const std::string &DBhost, uint16_t DBport)
 {
-//	boost::asio::ip::tcp::endpoint ep( boost::asio::ip::address::from_string(_dbHost), DBport);
 	std::cout << "start!" << std::endl;
 	//_dbHost error!!!
 	_upstream_socket.async_connect(
@@ -68,5 +67,23 @@ Connector::tcp_socket &Connector::getClientToDatabaseSocket()
 Connector::tcp_socket &Connector::getDatabaseToClientSocket()
 {
 	return _downstram_socket;
+}
+
+void Connector::simpleLogger(const size_t &bytes)
+{
+	std::string date;
+	time_t rawtime;
+	time(&rawtime);
+	date = ctime(&rawtime);
+	date.erase(date.size() - 1);
+	write(_logFileFd, "\n-----------------------------------------\n", 43);
+	write(_logFileFd, "Data: ", 5);
+	write(_logFileFd, date.c_str(), date.size());
+	write(_logFileFd, "\n", 1);
+	for (int i = 5; i < bytes - 1; ++i){
+		write(_logFileFd, _downstreamData, 1);
+	}
+	write(_logFileFd, "\n-----------------------------------------\n", 43);
+
 }
 

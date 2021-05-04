@@ -3,7 +3,7 @@
 //
 
 #include "ProxyServer.hpp"
-
+#include <unistd.h>
 //Серверные TCP функции в asio выполняет объект класса boost::asio::ip::tcp::acceptor.
 // Перед тем, как открыть соединение, необходимо настроить, откуда ждать этого соединения.
 // Для этого используется объект класса boost::asio::ip::tcp::endpoint.
@@ -16,20 +16,23 @@ ProxyServer::ProxyServer(boost::asio::io_service &ioService,
 						 const std::string &dbHost,
 						 uint16_t dbPort)
 		: _ioService(ioService),
-		logFileName(logFileName),
 		_serverHost(serverHost),
 		_serverPort(serverPort),
 		_dbHost(dbHost),
 		_dbPort(dbPort),
 		_selfAddress(boost::asio::ip::address_v4::from_string(_serverHost)),
-		_acceptor(_ioService,boost::asio::ip::tcp::endpoint(_selfAddress, _serverPort)) {}
+		_acceptor(_ioService,boost::asio::ip::tcp::endpoint(_selfAddress, _serverPort)) {
+	if ((_logFileFd = open("log.txt",  O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
+		throw std::runtime_error("Logfile errror!!!");
+	}
+}
 
 bool ProxyServer::acceptConnection()
 {
 	std::cout << "accept connection!" << std::endl;
 	try
 	{
-		_connector = boost::shared_ptr<Connector>(new Connector(_ioService));
+		_connector = boost::shared_ptr<Connector>(new Connector(_ioService, _logFileFd));
 		_acceptor.async_accept(
 				_connector->getDatabaseToClientSocket(),
 			boost::bind(&ProxyServer::accept_handler,
@@ -55,4 +58,9 @@ void ProxyServer::accept_handler(const boost::system::error_code &error)
 	else {
 		std::cerr << "Error! accept" << std::endl;
 	}
+}
+
+ProxyServer::~ProxyServer()
+{
+	close(_logFileFd);
 }
