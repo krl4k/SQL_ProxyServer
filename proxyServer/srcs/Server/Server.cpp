@@ -57,9 +57,9 @@ void Server::parseConfig(const std::string& fileName) {
 		throw std::exception();
     if ("log_file: " == strings[4].substr(0, 10)){
         std::string logFile(strings[4], 10);
-        if ((_logFileFd = open(logFile.c_str(), O_WRONLY | O_TRUNC)) < 0){
-            throw std::runtime_error("logFile error not opened!!!");
-        }
+		if ((_logFileFd = open(logFile.c_str(),  O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
+			throw std::runtime_error("Logfile errror!!!");
+		}
     }else
 		throw std::exception();
 

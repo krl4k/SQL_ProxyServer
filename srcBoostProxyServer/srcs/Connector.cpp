@@ -15,8 +15,6 @@ Connector::Connector(boost::asio::io_service &ioService, int logFileFd) :
 
 void Connector::start(const std::string &DBhost, uint16_t DBport)
 {
-	std::cout << "start!" << std::endl;
-	//_dbHost error!!!
 	_upstream_socket.async_connect(
 			boost::asio::ip::tcp::endpoint(
 					boost::asio::ip::address::from_string(DBhost), DBport),
@@ -27,8 +25,9 @@ void Connector::start(const std::string &DBhost, uint16_t DBport)
 
 void Connector::handle_connect(const Connector::error_code &errorCode)
 {
-	std::cout << "handle connect!" << std::endl;
 	if (!errorCode){
+
+		//read from Db
 		_upstream_socket.async_read_some(
 				boost::asio::buffer(_upstreamData, BUFSIZE),
 				boost::bind(&Connector::sendData_toClient,
@@ -37,6 +36,7 @@ void Connector::handle_connect(const Connector::error_code &errorCode)
 							boost::asio::placeholders::bytes_transferred));
 
 
+		//read from client
 		_downstram_socket.async_read_some(
 				boost::asio::buffer(_downstreamData, BUFSIZE),
 				boost::bind(&Connector::sendData_toDB,

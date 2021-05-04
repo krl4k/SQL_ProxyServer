@@ -7,7 +7,6 @@
 
 void Connector::sendData_toDB(const boost::system::error_code &error, const size_t &bytes)
 {
-	std::cout << "send data to db!" << std::endl;
 	if (!error){
 		// error bytes (BUFSIZE!!!!! shit)
 		_bytesCount = bytes;
@@ -19,14 +18,13 @@ void Connector::sendData_toDB(const boost::system::error_code &error, const size
 				boost::asio::placeholders::error));
 
 		simpleLogger(bytes);
-		std::cout << std::endl;
 	}else
 		closeConnection();
 }
 
 void Connector::readData_fromClient(const boost::system::error_code &error)
 {
-	std::cout << "read data from client!" << std::endl;
+
 	if (error)
 		closeConnection();
 	else{

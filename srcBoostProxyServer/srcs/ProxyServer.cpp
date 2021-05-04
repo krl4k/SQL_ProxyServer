@@ -22,14 +22,13 @@ ProxyServer::ProxyServer(boost::asio::io_service &ioService,
 		_dbPort(dbPort),
 		_selfAddress(boost::asio::ip::address_v4::from_string(_serverHost)),
 		_acceptor(_ioService,boost::asio::ip::tcp::endpoint(_selfAddress, _serverPort)) {
-	if ((_logFileFd = open("log.txt",  O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
+	if ((_logFileFd = open(logFileName.c_str(),  O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
 		throw std::runtime_error("Logfile errror!!!");
 	}
 }
 
 bool ProxyServer::acceptConnection()
 {
-	std::cout << "accept connection!" << std::endl;
 	try
 	{
 		_connector = boost::shared_ptr<Connector>(new Connector(_ioService, _logFileFd));
