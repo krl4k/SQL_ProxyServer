@@ -22,4 +22,4 @@
    2. Такой подход позволяет не тратить зря процессорное время.
 
 
-![Пример парсера](https://github.com/krl4k/SQL_ProxyServer/img/example.jpg)
+![Пример парсера](https://github.com/krl4k/SQL_ProxyServer/blob/master/img/example.jpg)
