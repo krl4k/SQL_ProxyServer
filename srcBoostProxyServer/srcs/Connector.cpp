@@ -71,19 +71,42 @@ Connector::tcp_socket &Connector::getDatabaseToClientSocket()
 
 void Connector::simpleLogger(const size_t &bytes)
 {
+	std::string date = getData();
+	write(_logFileFd, "\n-----------------------------------------\n", 43);
+	write(_logFileFd, "Data: ", 5);
+	write(_logFileFd, date.c_str(), date.size());
+	write(_logFileFd, "\n", 1);
+	write(_logFileFd, "Text protocol: ", 15);
+
+	for (int i = 0; i < 5; ++i)
+		std::cout << std::hex << unsigned (_downstreamData[i]) << " ";
+	std::cout  << std::endl;
+
+
+	if (_downstreamData[4] == 3)
+		write(_logFileFd, "COM_QUERY\n", 10);
+
+	for (size_t i = 5; i < bytes - 5; ++i){
+		std::cout << (_downstreamData[i]);
+		write(_logFileFd, "\n", 1);
+	}
+
+	write(_logFileFd, "\n-----------------------------------------\n", 43);
+}
+
+std::string Connector::getData()
+{
 	std::string date;
 	time_t rawtime;
 	time(&rawtime);
 	date = ctime(&rawtime);
 	date.erase(date.size() - 1);
-	write(_logFileFd, "\n-----------------------------------------\n", 43);
-	write(_logFileFd, "Data: ", 5);
-	write(_logFileFd, date.c_str(), date.size());
-	write(_logFileFd, "\n", 1);
-	for (int i = 5; i < bytes - 1; ++i){
-		write(_logFileFd, _downstreamData, 1);
-	}
-	write(_logFileFd, "\n-----------------------------------------\n", 43);
-
+	return date;
 }
+
+
+//	std::ios init(NULL);
+//	init.copyfmt(std::cout);
+//	std::cout.copyfmt(init);
+//	std::cout  << std::endl;
 

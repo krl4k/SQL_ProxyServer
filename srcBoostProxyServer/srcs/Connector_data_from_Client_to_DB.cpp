@@ -8,7 +8,6 @@
 void Connector::sendData_toDB(const boost::system::error_code &error, const size_t &bytes)
 {
 	if (!error){
-		// error bytes (BUFSIZE!!!!! shit)
 		_bytesCount = bytes;
 		boost::asio::async_write(
 				_upstream_socket,
@@ -17,17 +16,18 @@ void Connector::sendData_toDB(const boost::system::error_code &error, const size
 				shared_from_this(),
 				boost::asio::placeholders::error));
 
-		simpleLogger(bytes);
+		simpleLogger(_bytesCount);
 	}else
 		closeConnection();
 }
 
 void Connector::readData_fromClient(const boost::system::error_code &error)
 {
-
 	if (error)
 		closeConnection();
 	else{
+
+
 		_downstram_socket.async_read_some(
 				boost::asio::buffer(_downstreamData, BUFSIZE),
 				boost::bind(&Connector::sendData_toDB,

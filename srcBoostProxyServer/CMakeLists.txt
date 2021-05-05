@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(sql_tcp_server_boost)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "-pthread")
 
@@ -15,3 +15,5 @@ add_executable(proxy_server_boost
         ${SURS}ProxyServer.cpp
         ${SURS}main.cpp
         )
+
+target_link_libraries(proxy_server_boost "-lboost_locale")

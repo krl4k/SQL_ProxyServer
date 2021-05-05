@@ -17,6 +17,12 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 
+enum {
+	COM_QUERY = 3,
+
+};
+
+
 //Прокси-сервер TCP действует как посредник,
 //чтобы «пересылать» TCP-соединения от внешних клиентов
 //на отдельный удаленный сервер.
@@ -51,8 +57,8 @@ public:
 private:
 	tcp_socket _upstream_socket;
 	tcp_socket _downstram_socket;
-	char _upstreamData[BUFSIZE];
-	char _downstreamData[BUFSIZE];
+	unsigned char _upstreamData[BUFSIZE];
+	unsigned char _downstreamData[BUFSIZE];
 	size_t _bytesCount;
 	boost::mutex _mutex;
 
@@ -80,6 +86,8 @@ private:
 	void readData_fromClient(const boost::system::error_code& error);
 
 	void simpleLogger(const size_t &bytes);
+
+	std::string getData();
 };
 
 
