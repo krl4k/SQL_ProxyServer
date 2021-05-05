@@ -1,5 +1,7 @@
 # SQL_ProxyServer(Logger)
 
+##Schema https://miro.com/app/board/o9J_lGu7Mzk=/
+
 ### How to Start
     Необходимо создать конфигурационный фаил по примеру default.conf
     Отключить SSL
