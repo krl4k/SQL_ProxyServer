@@ -69,30 +69,42 @@ Connector::tcp_socket &Connector::getDatabaseToClientSocket()
 	return _downstram_socket;
 }
 
+
+/*!
+ * @param count bytes
+ * @warning doesnt correctly work with SSL enabled
+ * @details
+ * Protocol::Packet (https://dev.mysql.com/doc/internals/en/mysql-packet.html) <br/>
+ * int<3> - payload length <br/>
+ * int<1> - sequence id <br/>
+ * string - payload (Command = 1, Statement = payload length - 1) <br/>
+ */
 void Connector::simpleLogger(const size_t &bytes)
 {
-	std::string date = getData();
-	write(_logFileFd, "\n-----------------------------------------\n", 43);
-	write(_logFileFd, "Data: ", 5);
-	write(_logFileFd, date.c_str(), date.size());
-	write(_logFileFd, "\n", 1);
-	write(_logFileFd, "Text protocol: ", 15);
+	if (getProtocol(_downstreamData[4]) != "") {
+		write(_logFileFd, "\n-----------------------------------------\n", 43);
 
-	for (int i = 0; i < 5; ++i)
-		std::cout << std::hex << unsigned (_downstreamData[i]) << " ";
-	std::cout  << std::endl;
+		std::string date = "Data: " + getData() + "\n";
+		write(_logFileFd, date.c_str(), date.size());
+
+		int payloadLength = getPayloadLength();
+		std::string pL = "Payload length: " + std::to_string(payloadLength) + "\n";
+		write(_logFileFd, pL.c_str(), pL.size());
+
+		std::string packetNumber = "Packet number: " + std::to_string((int)_downstreamData[3]) + "\n";
+		write(_logFileFd, packetNumber.c_str(), packetNumber.size());
 
 
-	if (_downstreamData[4] == 3)
-		write(_logFileFd, "COM_QUERY\n", 10);
+		std::string textProtocol = "Text protocol: " + getProtocol(_downstreamData[4]);
+		write(_logFileFd, textProtocol.c_str(), textProtocol.size());
 
-	for (size_t i = 5; i < bytes - 5; ++i){
-		std::cout << (_downstreamData[i]);
-		write(_logFileFd, "\n", 1);
+		write(_logFileFd, "Payload:\n", 9);
+		write(_logFileFd, &_downstreamData[5], payloadLength - 1); // - 1 because _data[4] - is Command
+
+		write(_logFileFd, "\n-----------------------------------------\n", 43);
 	}
-
-	write(_logFileFd, "\n-----------------------------------------\n", 43);
 }
+
 
 std::string Connector::getData()
 {
@@ -102,6 +114,33 @@ std::string Connector::getData()
 	date = ctime(&rawtime);
 	date.erase(date.size() - 1);
 	return date;
+}
+
+/*!
+ *	@brief like Java enum.name()
+ */
+std::string Connector::getProtocol(unsigned char i)
+{
+	if (i == COM_SLEEP)
+		return "COM_SLEEP\n";
+	else if (i == COM_QUIT)
+		return "COM_QUIT\n";
+	else if (i == COM_QUERY)
+		return "COM_QUERY\n";
+	else if (i == COM_CREATE_DB)
+		return "COM_CREATE_DB\n";
+	else if (i == COM_DROP_DB)
+		return "COM_DROP_DB\n";
+	else if (i == COM_STATISTICS)
+		return "COM_STATISTICS\n";
+	return "";
+}
+
+int Connector::getPayloadLength()
+{
+	return  int(int(_downstreamData[0]) |
+				int(_downstreamData[1]) << 8 |
+				int(_downstreamData[2]) << 16);
 }
 
 

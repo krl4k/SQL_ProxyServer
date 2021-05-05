@@ -50,9 +50,8 @@ void ProxyServer::accept_handler(const boost::system::error_code &error)
 	if (!error){
 		_connector->start(_dbHost, _dbPort);
 
-		if (! acceptConnection()){
+		if (!acceptConnection())
 			std::cerr << "Error! accept" << std::endl;
-		}
 	}
 	else {
 		std::cerr << "Error! accept" << std::endl;

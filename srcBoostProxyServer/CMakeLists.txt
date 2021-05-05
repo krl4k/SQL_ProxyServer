@@ -3,8 +3,6 @@ project(sql_tcp_server_boost)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "-pthread")
-
 set(SURS  ${CMAKE_CURRENT_SOURCE_DIR}/srcs/)
 
 
@@ -16,4 +14,4 @@ add_executable(proxy_server_boost
         ${SURS}main.cpp
         )
 
-target_link_libraries(proxy_server_boost "-lboost_locale")
+target_link_libraries(proxy_server_boost "-pthread")

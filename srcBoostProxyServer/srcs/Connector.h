@@ -17,9 +17,13 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 
-enum {
+enum COM {
+	COM_SLEEP = 0,
+	COM_QUIT = 1,
 	COM_QUERY = 3,
-
+	COM_CREATE_DB = 5,
+	COM_DROP_DB = 6,
+	COM_STATISTICS = 9
 };
 
 
@@ -34,7 +38,6 @@ class Connector : public boost::enable_shared_from_this<Connector>
 {
 public:
 
-//	using namespace ip = boost::asio::ip;
 	using tcp_socket = boost::asio::ip::tcp::socket;
 	using self_type_ptr = boost::shared_ptr<Connector>;
 	typedef boost::system::error_code error_code;
@@ -88,6 +91,10 @@ private:
 	void simpleLogger(const size_t &bytes);
 
 	std::string getData();
+
+	std::string getProtocol(unsigned char i);
+
+	int getPayloadLength();
 };
 
 
