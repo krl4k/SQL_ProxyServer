@@ -1,4 +1,4 @@
-# SQL_ProxyServer
+# SQL_ProxyServer(Logger)
 
 ### How to Start
     Необходимо создать конфигурационный фаил по примеру default.conf
@@ -6,7 +6,11 @@
     Заполнить все необходимые поля. Запустить программу, подав вторым аргументом конфигурационный фаил
     В каждой директории присутствует Cmakelist для сборки проекта.
 
-    
+
+## Example
+![Пример парсера](https://github.com/krl4k/SQL_ProxyServer/blob/master/img/example.jpg)
+
+
 
 ### /srcBoostProxyServer - реализация на boost
    * Boost::asio
@@ -20,6 +24,3 @@
  * Select
    1. Вызов select блокирует выполнение программы до момента наступления событий на фаиловых дескрипторах.
    2. Такой подход позволяет не тратить зря процессорное время.
-
-
-![Пример парсера](https://github.com/krl4k/SQL_ProxyServer/blob/master/img/example.jpg)
